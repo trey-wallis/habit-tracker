@@ -68,15 +68,21 @@ function App() {
     )
       return;
 
-    const column = columns.find((column) => column.id === source.droppableId);
-    if (column) {
-      const arr = [...column.itemIds];
-      arr.splice(source.index, 1);
-      arr.splice(destination.index, 0, draggableId);
+    const start = columns.find((column) => column.id === source.droppableId);
+    const finish = columns.find(
+      (column) => column.id === destination.droppableId
+    );
+    if (!start || !finish) return;
+
+    //Moving between the same column
+    if (start === finish) {
+      const newItemIds = [...start.itemIds];
+      newItemIds.splice(source.index, 1);
+      newItemIds.splice(destination.index, 0, draggableId);
 
       const newColumn: Column = {
-        ...column,
-        itemIds: arr,
+        ...start,
+        itemIds: newItemIds,
       };
       setColumns((prevState) => {
         const arr = [...prevState];
@@ -86,13 +92,41 @@ function App() {
         arr[index] = newColumn;
         return arr;
       });
+      //Moving between different columns
+    } else {
+      const newStartItemIds = [...start.itemIds];
+      newStartItemIds.splice(source.index, 1);
+      const newStart = {
+        ...start,
+        itemIds: newStartItemIds,
+      };
+
+      const newFinishItemIds = [...finish.itemIds];
+      newFinishItemIds.splice(destination.index, 0, draggableId);
+      const newFinish = {
+        ...finish,
+        itemIds: newFinishItemIds,
+      };
+
+      setColumns((prevState) => {
+        const arr = [...prevState];
+        const startIndex = arr.findIndex(
+          (column) => column.id === source.droppableId
+        );
+        const finishIndex = arr.findIndex(
+          (column) => column.id === destination.droppableId
+        );
+        arr[startIndex] = newStart;
+        arr[finishIndex] = newFinish;
+        return arr;
+      });
     }
   }
 
   return (
     <Box w="100vw" h="100vh">
       <DragDropContext onDragEnd={onDragEnd}>
-        <HStack spacing={6} p={8} h="100%">
+        <HStack spacing={6} p={8} align="flex-start">
           {columns.map((column) => {
             const items = column.itemIds
               .map((id) => {
