@@ -1,25 +1,25 @@
 import { ComponentMeta, ComponentStory } from "@storybook/react";
 
-import Section from "./index";
+import CardList from "./index";
 
 export default {
   /* 👇 The title prop is optional.
    * See https://storybook.js.org/docs/react/configure/overview#configure-story-loading
    * to learn how to generate automatic titles
    */
-  title: "Section",
-  component: Section,
-} as ComponentMeta<typeof Section>;
+  title: "CardList",
+  component: CardList,
+} as ComponentMeta<typeof CardList>;
 
 //👇 We create a “template” of how args map to rendering
-const Template: ComponentStory<typeof Section> = (args) => (
-  <Section {...args} />
+const Template: ComponentStory<typeof CardList> = (args) => (
+  <CardList {...args} />
 );
 
 export const Default = Template.bind({});
 
 Default.args = {
-  title: "Section title",
+  title: "CardList title",
   items: [
     {
       id: "1",

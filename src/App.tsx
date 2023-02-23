@@ -1,9 +1,11 @@
-import { Box, HStack } from "@chakra-ui/react";
-import Section from "./components/Section";
-import { Item } from "./services/api/types";
+import { Box, HStack, usePrevious } from "@chakra-ui/react";
+import CardList from "./components/CardList";
+import { Column, Item } from "./types";
 import { DragDropContext, DropResult } from "react-beautiful-dnd";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { notEmpty } from "./services/typescript/utils";
+import { loadState, saveState } from "./services/persist";
+import { useDidMountEffect } from "./services/hooks";
 
 const loadedItems: Item[] = [
   {
@@ -29,34 +31,14 @@ const loadedItems: Item[] = [
   },
 ];
 
-interface Column {
-  id: string;
-  title: string;
-  itemIds: string[];
-  hidePoints?: boolean;
-}
-
-const INITIAL_COLUMNS: Column[] = [
-  {
-    id: "out-of-control",
-    title: "Out of Control",
-    itemIds: [],
-  },
-  {
-    id: "in-control",
-    title: "In Control",
-    itemIds: [],
-  },
-  {
-    id: "backlog",
-    title: "Backlog",
-    itemIds: ["1", "2", "3"],
-    hidePoints: true,
-  },
-];
+const initialState = loadState();
 
 function App() {
-  const [columns, setColumns] = useState(INITIAL_COLUMNS);
+  const [columns, setColumns] = useState(initialState.columns);
+
+  // useDidMountEffect(() => {
+  //   saveState(columns, loadedItems);
+  // }, [columns]);
 
   function onDragEnd(result: DropResult) {
     const { source, destination, draggableId } = result;
@@ -68,14 +50,15 @@ function App() {
     )
       return;
 
-    const start = columns.find((column) => column.id === source.droppableId);
-    const finish = columns.find(
-      (column) => column.id === destination.droppableId
-    );
-    if (!start || !finish) return;
+    setColumns((prevState) => {
+      const start = prevState.find(
+        (column) => column.id === source.droppableId
+      );
+      const finish = prevState.find(
+        (column) => column.id === destination.droppableId
+      );
+      if (!start || !finish) return prevState;
 
-    //Moving between the same column
-    if (start === finish) {
       const newItemIds = [...start.itemIds];
       newItemIds.splice(source.index, 1);
       newItemIds.splice(destination.index, 0, draggableId);
@@ -84,43 +67,36 @@ function App() {
         ...start,
         itemIds: newItemIds,
       };
-      setColumns((prevState) => {
-        const arr = [...prevState];
-        const index = arr.findIndex(
-          (column) => column.id === source.droppableId
-        );
-        arr[index] = newColumn;
-        return arr;
-      });
-      //Moving between different columns
-    } else {
-      const newStartItemIds = [...start.itemIds];
-      newStartItemIds.splice(source.index, 1);
-      const newStart = {
-        ...start,
-        itemIds: newStartItemIds,
-      };
+      const arr = [...prevState];
+      const index = arr.findIndex((column) => column.id === start.id);
+      arr[index] = newColumn;
+      return arr;
+    });
 
-      const newFinishItemIds = [...finish.itemIds];
-      newFinishItemIds.splice(destination.index, 0, draggableId);
-      const newFinish = {
-        ...finish,
-        itemIds: newFinishItemIds,
-      };
-
-      setColumns((prevState) => {
-        const arr = [...prevState];
-        const startIndex = arr.findIndex(
-          (column) => column.id === source.droppableId
-        );
-        const finishIndex = arr.findIndex(
-          (column) => column.id === destination.droppableId
-        );
-        arr[startIndex] = newStart;
-        arr[finishIndex] = newFinish;
-        return arr;
-      });
-    }
+    // const newStartItemIds = [...start.itemIds];
+    // newStartItemIds.splice(source.index, 1);
+    // const newStart = {
+    //   ...start,
+    //   itemIds: newStartItemIds,
+    // };
+    // const newFinishItemIds = [...finish.itemIds];
+    // newFinishItemIds.splice(destination.index, 0, draggableId);
+    // const newFinish = {
+    //   ...finish,
+    //   itemIds: newFinishItemIds,
+    // };
+    // setColumns((prevState) => {
+    //   const arr = [...prevState];
+    //   const startIndex = arr.findIndex(
+    //     (column) => column.id === source.droppableId
+    //   );
+    //   const finishIndex = arr.findIndex(
+    //     (column) => column.id === destination.droppableId
+    //   );
+    //   arr[startIndex] = newStart;
+    //   arr[finishIndex] = newFinish;
+    //   return arr;
+    // });
   }
 
   return (
@@ -134,7 +110,7 @@ function App() {
               })
               .filter(notEmpty);
             return (
-              <Section
+              <CardList
                 key={column.id}
                 droppableId={column.id}
                 title={column.title}

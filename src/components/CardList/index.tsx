@@ -1,5 +1,5 @@
 import { Box, Heading, Text, Flex } from "@chakra-ui/react";
-import { Item } from "../../services/api/types";
+import { Item } from "../../types";
 import CustomCard from "../CustomCard";
 import { StrictModeDroppable } from "../StrictModeDroppable";
 
@@ -10,7 +10,7 @@ interface Props {
   hidePoints?: boolean;
 }
 
-export default function Section({
+export default function CardList({
   droppableId,
   title,
   hidePoints,
